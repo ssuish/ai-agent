@@ -23,4 +23,4 @@ def get_files_info(working_directory: str, directory: str = ".") -> str:
 
         return "\n".join(result)
     except Exception as e:
-        return f"Error: {e}"
+        raise Exception(f"Error: {e}")
