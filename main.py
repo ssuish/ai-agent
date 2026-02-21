@@ -5,6 +5,7 @@ from google.genai import types
 from argparse import ArgumentParser
 from prompts import system_prompt
 from call_functions import available_functions, call_function
+from config import MAX_ITERS
 
 parser = ArgumentParser()
 parser.add_argument("user_prompt", type=str, help="User prompt")
@@ -18,46 +19,61 @@ client = genai.Client(api_key=api_key)
 model = "gemini-2.5-flash"
 contents = args.user_prompt
 messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
-response = client.models.generate_content(
-    model=model, 
-    contents=messages,
-    config=types.GenerateContentConfig(
-        system_instruction=system_prompt,
-        temperature=0,
-        tools=[available_functions],
-    ),
+response = None
+
+for _ in range(MAX_ITERS):
+    response = client.models.generate_content(
+        model=model,
+        contents=messages,
+        config=types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            temperature=0,
+            tools=[available_functions],
+        ),
     )
 
-if args.verbose:
-    print("User prompt:", contents)
+    if response.candidates and response.candidates[0].content:
+        messages.append(response.candidates[0].content)
 
-    if response.usage_metadata:
-        prompt_token = response.usage_metadata.prompt_token_count
-        response_token = response.usage_metadata.candidates_token_count
+    function_calls = response.function_calls
+    function_results = []
 
-        print(f"Prompt tokens: {prompt_token}")
-        print(f"Response tokens: {response_token}")
+    if function_calls is not None:
+        for call in function_calls:
+            function_call_result = call_function(call)
+
+            if not function_call_result.parts:
+                raise Exception("Can't call a function.")
+
+            if not function_call_result.parts[0].function_response:
+                raise Exception("There are no function response.")
+
+            function_results.append(function_call_result.parts[0])
+
+            if args.verbose:
+                print("User prompt:", contents)
+
+                if response.usage_metadata:
+                    prompt_token = response.usage_metadata.prompt_token_count
+                    response_token = response.usage_metadata.candidates_token_count
+
+                    print(f"Prompt tokens: {prompt_token}")
+                    print(f"Response tokens: {response_token}")
+                    print(
+                        f"-> {function_call_result.parts[0].function_response.response}"
+                    )
+                else:
+                    raise RuntimeError("Usage metadata not found")
+
+        messages.append(types.Content(role="user", parts=function_results))
+
     else:
-        raise RuntimeError("Usage metadata not found")
+        print("Response:")
+        print(response.text)
+        break
 
-function_calls = response.function_calls
-function_results = []
-
-if function_calls is not None:
-    for call in function_calls:
-        function_call_result = call_function(call)
-
-        if not function_call_result.parts:
-            raise Exception("Can't call a function.")
-
-        if not function_call_result.parts[0].function_response:
-            raise Exception("There are no function response.")
-
-        function_results.append(function_call_result.parts[0])
-
-        if args.verbose:
-            print(f"-> {function_call_result.parts[0].function_response.response}")
-    
-else:
-    print("Response:")
-    print(response.text)
+if not response:
+    print(
+        f"Error: reached {MAX_ITERS} iterations, but the model never produced a final response."
+    )
+    raise SystemExit(1)

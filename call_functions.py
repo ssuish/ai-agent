@@ -16,7 +16,7 @@ schema_get_files_info = types.FunctionDeclaration(
                 description="Directory path to list files from, relative to the working directory (default is the working directory itself)",
             ),
         },
-        required=['directory']
+        required=["directory"],
     ),
 )
 
@@ -32,10 +32,10 @@ schema_get_file_content = types.FunctionDeclaration(
             ),
             "file_path": types.Schema(
                 type=types.Type.STRING,
-                description="File path of the file to read its contents, relative to the working directory."
-            )
+                description="File path of the file to read its contents, relative to the working directory.",
+            ),
         },
-        required=['file_path']
+        required=["file_path"],
     ),
 )
 
@@ -51,18 +51,18 @@ schema_run_python_files = types.FunctionDeclaration(
             ),
             "file_path": types.Schema(
                 type=types.Type.STRING,
-                description="File path of the Python script to run, relative to the working directory."
+                description="File path of the Python script to run, relative to the working directory.",
             ),
             "args": types.Schema(
                 type=types.Type.ARRAY,
                 description="Optional list of command-line arguments to be pass on the running Python script.",
                 items=types.Schema(
                     type=types.Type.STRING,
-                    description="List of command-line arguments."
-                )
-            )
+                    description="List of command-line arguments.",
+                ),
+            ),
         },
-        required=['file_path']
+        required=["file_path"],
     ),
 )
 
@@ -78,25 +78,27 @@ schema_write_file = types.FunctionDeclaration(
             ),
             "file_path": types.Schema(
                 type=types.Type.STRING,
-                description="File path of the file to write on, relative to the working directory."
+                description="File path of the file to write on, relative to the working directory.",
             ),
             "content": types.Schema(
                 type=types.Type.STRING,
-                description="Content of the file to be written on the file."
-            )
+                description="Content of the file to be written on the file.",
+            ),
         },
-        required=['file_path', 'content']
+        required=["file_path", "content"],
     ),
 )
 
 
 available_functions = types.Tool(
     function_declarations=[
-        schema_get_files_info, 
+        schema_get_files_info,
         schema_get_file_content,
         schema_run_python_files,
-        schema_write_file],
+        schema_write_file,
+    ],
 )
+
 
 def call_function(function_call, verbose=False):
     if verbose:
@@ -123,7 +125,7 @@ def call_function(function_call, verbose=False):
                 )
             ],
         )
-    
+
     args = dict(function_call.args) if function_call.args else {}
 
     args["working_directory"] = "./calculator"
@@ -139,4 +141,3 @@ def call_function(function_call, verbose=False):
             )
         ],
     )
-
