@@ -4,7 +4,7 @@ from google import genai
 from google.genai import types
 from argparse import ArgumentParser
 from prompts import system_prompt
-from call_functions import available_functions
+from call_functions import available_functions, call_function
 
 parser = ArgumentParser()
 parser.add_argument("user_prompt", type=str, help="User prompt")
@@ -41,10 +41,23 @@ if args.verbose:
         raise RuntimeError("Usage metadata not found")
 
 function_calls = response.function_calls
+function_results = []
 
 if function_calls is not None:
     for call in function_calls:
-        print(f"Calling function: {call.name}({call.args})")
+        function_call_result = call_function(call)
+
+        if not function_call_result.parts:
+            raise Exception("Can't call a function.")
+
+        if not function_call_result.parts[0].function_response:
+            raise Exception("There are no function response.")
+
+        function_results.append(function_call_result.parts[0])
+
+        if args.verbose:
+            print(f"-> {function_call_result.parts[0].function_response.response}")
+    
 else:
     print("Response:")
     print(response.text)
