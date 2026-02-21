@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from argparse import ArgumentParser
+from prompts import system_prompt
+from call_functions import available_functions
 
 parser = ArgumentParser()
 parser.add_argument("user_prompt", type=str, help="User prompt")
@@ -16,7 +18,15 @@ client = genai.Client(api_key=api_key)
 model = "gemini-2.5-flash"
 contents = args.user_prompt
 messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
-response = client.models.generate_content(model=model, contents=messages)
+response = client.models.generate_content(
+    model=model, 
+    contents=messages,
+    config=types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        temperature=0,
+        tools=[available_functions],
+    ),
+    )
 
 if args.verbose:
     print("User prompt:", contents)
@@ -30,5 +40,11 @@ if args.verbose:
     else:
         raise RuntimeError("Usage metadata not found")
 
-print("Response:")
-print(response.text)
+function_calls = response.function_calls
+
+if function_calls is not None:
+    for call in function_calls:
+        print(f"Calling function: {call.name}({call.args})")
+else:
+    print("Response:")
+    print(response.text)
