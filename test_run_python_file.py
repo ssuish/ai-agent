@@ -2,6 +2,7 @@ import unittest
 import os
 from functions.run_python_file import run_python_file
 
+
 class TestWriteFile(unittest.TestCase):
     def test_calculator_usage_instruction(self):
         print("Results for current directory")
@@ -44,6 +45,7 @@ class TestWriteFile(unittest.TestCase):
             run_python_file("calculator", "lorem.txt")
         print(ctx.exception, "\n")
         self.assertIn("is not a Python file", str(ctx.exception))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

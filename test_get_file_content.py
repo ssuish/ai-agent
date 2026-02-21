@@ -1,7 +1,8 @@
 import unittest
 import os
-from functions.get_files_content import get_file_content
+from functions.get_file_content import get_file_content
 from config import CHARACTER_LIMIT
+
 
 class TestGetFileContent(unittest.TestCase):
     def test_truncation_message_when_file_exceeds_character_limit(self):
@@ -28,7 +29,7 @@ class TestGetFileContent(unittest.TestCase):
         print("Results for current directory")
         result = get_file_content("calculator", "pkg/calculator.py")
         content = result.split("[...")[0] if "[..." in result else result
-        
+
         print(content)
 
         self.assertNotEqual(len(content), CHARACTER_LIMIT)
@@ -43,13 +44,13 @@ class TestGetFileContent(unittest.TestCase):
         print(ctx.exception, "\n")
         self.assertIn("Error:", str(ctx.exception))
 
-
     def test_raises_when_file_does_not_exist(self):
         print("Results for current directory")
         with self.assertRaises(Exception) as ctx:
             get_file_content("calculator", "pkg/does_not_exist.py")
         print(ctx.exception, "\n")
         self.assertIn("Error:", str(ctx.exception))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
